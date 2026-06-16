@@ -1,0 +1,19 @@
+services:
+  app-shelf:
+    build: .
+    container_name: app-shelf
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # 安装包存放目录（挂载宿主机路径，方便直接拷贝文件进来）
+      - ./static:/app/static
+      - ./templates:/app/templates
+      # 软件配置（热更新：改 apps.json 无需重建镜像）
+      - ./apps.json:/app/apps.json
+    labels:
+      # Traefik 配置（按需启用）
+      - "traefik.enable=true"
+      - "traefik.http.routers.dropkit.rule=Host(`dropkit.example.com`)"
+      - "traefik.http.routers.dropkit.entrypoints=websecure"
+      - "traefik.http.routers.dropkit.tls.certresolver=cloudflare"

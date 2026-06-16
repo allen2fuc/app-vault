@@ -1,0 +1,101 @@
+[
+  {
+    "id": "vscode",
+    "name": "VS Code",
+    "description": "微软出品的轻量级代码编辑器，支持几乎所有编程语言与插件生态。",
+    "category": "开发工具",
+    "icon": "/static/icons/vscode.svg",
+    "version": "1.89.1",
+    "size": "98 MB",
+    "publisher": "Microsoft",
+    "download_url": "/static/files/vscode-setup.exe"
+  },
+  {
+    "id": "python312",
+    "name": "Python 3.12",
+    "description": "通用编程语言，内置 pip 包管理器，适合数据分析与后端开发。",
+    "category": "开发工具",
+    "icon": "/static/icons/python.svg",
+    "version": "3.12.3",
+    "size": "25 MB",
+    "publisher": "Python Software Foundation",
+    "download_url": "/static/files/python-3.12.3-amd64.exe"
+  },
+  {
+    "id": "git",
+    "name": "Git",
+    "description": "分布式版本控制系统，开发必备基础工具。",
+    "category": "开发工具",
+    "icon": "/static/icons/git.svg",
+    "version": "2.45.1",
+    "size": "56 MB",
+    "publisher": "Git SCM",
+    "download_url": "/static/files/Git-2.45.1-64-bit.exe"
+  },
+  {
+    "id": "libreoffice",
+    "name": "LibreOffice",
+    "description": "功能完整的开源办公套件，兼容 Word/Excel/PPT 格式。",
+    "category": "办公软件",
+    "icon": "/static/icons/libreoffice.svg",
+    "version": "24.2.3",
+    "size": "327 MB",
+    "publisher": "The Document Foundation",
+    "download_url": "/static/files/LibreOffice_24.2.3_Win_x86-64.msi"
+  },
+  {
+    "id": "typora",
+    "name": "Typora",
+    "description": "所见即所得的 Markdown 编辑器，界面简洁优雅。",
+    "category": "办公软件",
+    "icon": "/static/icons/typora.svg",
+    "version": "1.9.5",
+    "size": "89 MB",
+    "publisher": "Typora",
+    "download_url": "/static/files/typora-setup-x64.exe"
+  },
+  {
+    "id": "7zip",
+    "name": "7-Zip",
+    "description": "高压缩率免费解压工具，支持 7z、zip、rar 等主流格式。",
+    "category": "系统工具",
+    "icon": "/static/icons/7zip.svg",
+    "version": "23.01",
+    "size": "1.5 MB",
+    "publisher": "Igor Pavlov",
+    "download_url": "/static/files/7z2301-x64.exe"
+  },
+  {
+    "id": "cpuz",
+    "name": "CPU-Z",
+    "description": "专业硬件信息检测工具，实时显示 CPU、内存、主板参数。",
+    "category": "系统工具",
+    "icon": "/static/icons/cpuz.svg",
+    "version": "2.09",
+    "size": "3.2 MB",
+    "publisher": "CPUID",
+    "download_url": "/static/files/cpu-z_2.09-en.exe"
+  },
+  {
+    "id": "wireguard",
+    "name": "WireGuard",
+    "description": "现代高性能 VPN 客户端，配置简单，加密强度高。",
+    "category": "网络工具",
+    "icon": "/static/icons/wireguard.svg",
+    "version": "0.5.3",
+    "size": "8.5 MB",
+    "publisher": "WireGuard LLC",
+    "download_url": "/static/files/wireguard-installer.exe"
+  },
+  {
+    "id": "termius",
+    "name": "Termius",
+    "description": "跨平台 SSH 客户端，支持多会话管理与云端同步。",
+    "category": "网络工具",
+    "icon": "/static/icons/termius.svg",
+    "version": "9.9.0",
+    "size": "142 MB",
+    "publisher": "Termius",
+    "download_url": "/static/files/Termius.Setup.9.9.0.exe"
+  }
+]

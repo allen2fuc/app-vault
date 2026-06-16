@@ -7,6 +7,20 @@
 
 ### 方式一：Docker Compose（推荐）
 
+```yml
+services:
+  app-shelf:
+    build: .
+    container_name: app-shelf
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./static/files:/app/static/files
+      - ./static/icons:/app/static/icons
+      - ./apps.json:/app/apps.json
+```
+
 ```bash
 docker compose up -d
 ```

@@ -10,7 +10,7 @@
 ```yml
 services:
   app-shelf:
-    build: .
+    image: uhub.service.ucloud.cn/allen2fuc/app-shelf:latest
     container_name: app-shelf
     restart: unless-stopped
     ports:

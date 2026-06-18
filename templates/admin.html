@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AppVault · 应用管理</title>
+<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f5f3; --surface: #ffffff; --surface2: #f0efeb;
+    --border: #e4e3de; --border2: #d0cfc9;
+    --text: #1a1a18; --text2: #6b6a65; --text3: #9e9d98;
+    --accent: #5046e5; --accent-bg: #eeedfd; --accent-text: #3730c4;
+    --danger: #dc2626; --danger-bg: #fee2e2; --danger-border: #fca5a5;
+    --green: #16a34a; --green-bg: #dcfce7;
+    --radius: 10px; --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111110; --surface: #1c1c1a; --surface2: #242422;
+      --border: #2e2e2b; --border2: #3a3a36;
+      --text: #e8e8e4; --text2: #9a9993; --text3: #636360;
+      --accent: #7b72ff; --accent-bg: #1e1c3a; --accent-text: #a09bff;
+      --danger: #f87171; --danger-bg: #3b0a0a; --danger-border: #7f1d1d;
+      --green: #4ade80; --green-bg: #052e16;
+    }
+  }
+
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+  /* topbar */
+  .topbar { position: sticky; top: 0; z-index: 100; background: rgba(245,245,243,.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 16px; }
+  @media (prefers-color-scheme: dark) { .topbar { background: rgba(17,17,16,.92); } }
+  .logo { font-size: 16px; font-weight: 700; letter-spacing: -.4px; color: var(--text); display: flex; align-items: center; gap: 7px; white-space: nowrap; text-decoration: none; }
+  .logo-icon { width: 26px; height: 26px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { display: block; }
+  .topbar-sep { width: 1px; height: 20px; background: var(--border2); }
+  .page-title { font-size: 14px; font-weight: 600; color: var(--text2); }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s; text-decoration: none; }
+  .btn:hover { opacity: .85; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+  .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
+
+  /* page layout */
+  .page { max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .page-heading { font-size: 20px; font-weight: 700; color: var(--text); }
+  .page-sub { font-size: 13px; color: var(--text3); margin-top: 2px; }
+
+  /* search bar */
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
+  .search-wrap { position: relative; flex: 1; max-width: 320px; }
+  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+  #search { width: 100%; height: 34px; padding: 0 12px 0 34px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 13px; outline: none; transition: border-color .15s; }
+  #search:focus { border-color: var(--accent); }
+  #search::placeholder { color: var(--text3); }
+  .result-count { font-size: 12px; color: var(--text3); margin-left: auto; }
+
+  /* table */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: .05em; text-transform: uppercase; background: var(--surface2); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  td { padding: 12px 16px; vertical-align: middle; }
+
+  .app-cell { display: flex; align-items: center; gap: 10px; }
+  .app-avatar { width: 32px; height: 32px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+  .app-avatar img { width: 100%; height: 100%; object-fit: contain; }
+  .app-name { font-weight: 600; color: var(--text); font-size: 13px; }
+  .app-id { font-size: 11px; color: var(--text3); font-family: monospace; margin-top: 1px; }
+
+  .tags-cell { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tag { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 99px; white-space: nowrap; }
+
+  .version-text { font-size: 12px; color: var(--text2); font-family: monospace; }
+  .size-text { font-size: 12px; color: var(--text3); }
+
+  .actions { display: flex; gap: 6px; }
+  .icon-btn { width: 28px; height: 28px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: transparent; cursor: pointer; color: var(--text2); display: flex; align-items: center; justify-content: center; transition: background .12s, color .12s, border-color .12s; flex-shrink: 0; }
+  .icon-btn:hover { background: var(--surface2); color: var(--text); }
+  .icon-btn.danger:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
+
+  /* empty */
+  .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .empty svg { margin-bottom: 10px; opacity: .35; }
+  .empty p { font-size: 13px; }
+
+  /* skeleton */
+  .skel-row td { padding: 14px 16px; }
+  .skel-line { height: 13px; border-radius: 6px; background: var(--surface2); animation: shimmer 1.4s infinite; position: relative; overflow: hidden; }
+  .skel-line::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent 0%,var(--border) 50%,transparent 100%); animation:shimmer 1.4s infinite; }
+  @keyframes shimmer { from{transform:translateX(-100%)} to{transform:translateX(100%)} }
+
+  /* toast */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(12px); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 999; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { background: var(--green); color: #fff; }
+  .toast.error   { background: var(--danger); color: #fff; }
+
+  /* modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 300; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 14px; border: 1px solid var(--border); width: 540px; max-width: 95vw; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+  .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--text); }
+  .modal-body { padding: 20px 24px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; flex-shrink: 0; }
+
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 12px; font-weight: 600; color: var(--text2); }
+  label small { font-weight: 400; color: var(--text3); }
+  input[type=text], select, textarea { padding: 8px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: border-color .15s; }
+  input[type=text]:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 68px; }
+
+  /* tag chip input */
+  .tag-input-wrap { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 5px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); min-height: 38px; cursor: text; transition: border-color .15s; }
+  .tag-input-wrap:focus-within { border-color: var(--accent); }
+  .tag-chip { display: flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 500; background: var(--accent-bg); color: var(--accent-text); }
+  .tag-chip-x { background: none; border: none; cursor: pointer; color: inherit; opacity: .6; padding: 0; font-size: 14px; line-height: 1; display: flex; align-items: center; }
+  .tag-chip-x:hover { opacity: 1; }
+  .tag-input-field { border: none; outline: none; background: transparent; color: var(--text); font-size: 13px; min-width: 80px; flex: 1; padding: 2px 0; }
+
+  /* confirm dialog */
+  .confirm-box { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 24px; width: 360px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+  .confirm-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .confirm-body { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
+  .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="/">
+    <div class="logo-icon">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="2" y="3" width="10" height="8" rx="1.5" stroke="#fff" stroke-width="1.6"/>
+        <path d="M5 3V2.5a2 2 0 0 1 4 0V3" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </div>
+    AppVault
+  </a>
+  <div class="topbar-sep"></div>
+  <span class="page-title">应用管理</span>
+  <div class="topbar-right">
+    <a class="btn btn-ghost" href="/">← 返回首页</a>
+    <button class="btn btn-primary" onclick="openModal()">
+      <svg width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"><path d="M6 1v10M1 6h10"/></svg>
+      新增应用
+    </button>
+  </div>
+</header>
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-heading">应用列表</div>
+      <div class="page-sub">管理所有已收录的软件，支持增删改查。</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <circle cx="6" cy="6" r="4.5"/><path d="M10.5 10.5l2 2"/>
+      </svg>
+      <input type="search" id="search" placeholder="搜索名称或描述…" autocomplete="off" />
+    </div>
+    <span class="result-count" id="result-count"></span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>应用</th>
+          <th>标签</th>
+          <th>系统 / 架构</th>
+          <th>版本</th>
+          <th>大小</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <!-- skeleton -->
+        <tr class="skel-row"><td><div class="skel-line" style="width:160px"></div></td><td><div class="skel-line" style="width:80px"></div></td><td><div class="skel-line" style="width:90px"></div></td><td><div class="skel-line" style="width:60px"></div></td><td><div class="skel-line" style="width:50px"></div></td><td></td></tr>
+        <tr class="skel-row"><td><div class="skel-line" style="width:140px"></div></td><td><div class="skel-line" style="width:100px"></div></td><td><div class="skel-line" style="width:70px"></div></td><td><div class="skel-line" style="width:55px"></div></td><td><div class="skel-line" style="width:45px"></div></td><td></td></tr>
+        <tr class="skel-row"><td><div class="skel-line" style="width:120px"></div></td><td><div class="skel-line" style="width:90px"></div></td><td><div class="skel-line" style="width:80px"></div></td><td><div class="skel-line" style="width:50px"></div></td><td><div class="skel-line" style="width:40px"></div></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 新增 / 编辑 modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">新增应用</span>
+      <button class="icon-btn" onclick="closeModal()">
+        <svg width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group full">
+        <label>应用名称 *</label>
+        <input type="text" id="f-name" placeholder="例：VS Code" />
+      </div>
+      <div class="form-group full">
+        <label>描述</label>
+        <textarea id="f-description" placeholder="简单介绍这款软件的用途…"></textarea>
+      </div>
+      <div class="form-group full">
+        <label>标签 <small>Enter 或逗号确认，Backspace 删除</small></label>
+        <div class="tag-input-wrap" id="tag-wrap" onclick="document.getElementById('tag-field').focus()">
+          <input class="tag-input-field" id="tag-field" placeholder="添加标签…" autocomplete="off" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>操作系统</label>
+        <select id="f-os">
+          <option value="">— 选择 —</option>
+          <option>Windows</option><option>macOS</option>
+          <option>Linux</option><option>跨平台</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>架构</label>
+        <select id="f-arch">
+          <option value="">— 选择 —</option>
+          <option>x64</option><option>x86</option>
+          <option>ARM64</option><option>Universal</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>版本号</label>
+        <input type="text" id="f-version" placeholder="例：1.0.0" />
+      </div>
+      <div class="form-group">
+        <label>文件大小</label>
+        <input type="text" id="f-size" placeholder="例：98 MB" />
+      </div>
+      <div class="form-group">
+        <label>发行商</label>
+        <input type="text" id="f-publisher" placeholder="例：Microsoft" />
+      </div>
+      <div class="form-group">
+        <label>图标路径</label>
+        <input type="text" id="f-icon" placeholder="/static/icons/xxx.svg" />
+      </div>
+      <div class="form-group full">
+        <label>下载地址</label>
+        <input type="text" id="f-download_url" placeholder="/static/files/xxx.exe 或外部链接" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" id="modal-save-btn" onclick="saveApp()">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 删除确认 -->
+<div class="modal-overlay" id="confirm-overlay">
+  <div class="confirm-box" role="dialog" aria-modal="true">
+    <div class="confirm-title">确认删除</div>
+    <div class="confirm-body" id="confirm-body">确定要删除这个应用吗？此操作无法撤销。</div>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-danger" id="confirm-ok-btn">删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  const TAG_PALETTE = [
+    {bg:'#eeedfd',color:'#3730c4'},{bg:'#e1f5ee',color:'#0a6649'},
+    {bg:'#faeeda',color:'#7a4a08'},{bg:'#e6f1fb',color:'#1054a0'},
+    {bg:'#f3e8ff',color:'#6b21a8'},{bg:'#fde8e8',color:'#9f1239'},
+    {bg:'#ecfdf5',color:'#065f46'},{bg:'#fffbeb',color:'#92400e'},
+  ];
+  const TAG_PALETTE_DARK = [
+    {bg:'#1e1c3a',color:'#a09bff'},{bg:'#0d2a1f',color:'#4dc494'},
+    {bg:'#261d08',color:'#d4a843'},{bg:'#0e1f35',color:'#5fa8ee'},
+    {bg:'#2d1a4a',color:'#c084fc'},{bg:'#3b0a0a',color:'#fca5a5'},
+    {bg:'#064e3b',color:'#6ee7b7'},{bg:'#451a03',color:'#fcd34d'},
+  ];
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const palette = isDark ? TAG_PALETTE_DARK : TAG_PALETTE;
+  const tagColorMap = {};
+  function tagStyle(tag) {
+    if (!tagColorMap[tag]) { const i = Object.keys(tagColorMap).length % palette.length; tagColorMap[tag] = palette[i]; }
+    return tagColorMap[tag];
+  }
+
+  let ALL_APPS = [], keyword = '', editingId = null, formTags = [], confirmCb = null;
+
+  const $tbody     = document.getElementById('tbody');
+  const $search    = document.getElementById('search');
+  const $count     = document.getElementById('result-count');
+  const $modal     = document.getElementById('modal-overlay');
+  const $modalTitle= document.getElementById('modal-title');
+  const $saveBtn   = document.getElementById('modal-save-btn');
+  const $confirm   = document.getElementById('confirm-overlay');
+  const $confirmBody= document.getElementById('confirm-body');
+  const $confirmOk = document.getElementById('confirm-ok-btn');
+  const $tagWrap   = document.getElementById('tag-wrap');
+  const $tagField  = document.getElementById('tag-field');
+  const $toast     = document.getElementById('toast');
+
+  /* ── toast ── */
+  let toastTimer;
+  function showToast(msg, type='') {
+    clearTimeout(toastTimer);
+    $toast.textContent = msg; $toast.className = 'toast' + (type ? ' '+type : '');
+    requestAnimationFrame(() => { $toast.classList.add('show'); });
+    toastTimer = setTimeout(() => $toast.classList.remove('show'), 2600);
+  }
+
+  /* ── tag chip input ── */
+  function renderFormTags() {
+    $tagWrap.querySelectorAll('.tag-chip').forEach(el => el.remove());
+    formTags.forEach((t, i) => {
+      const chip = document.createElement('div'); chip.className = 'tag-chip';
+      const s = tagStyle(t); chip.style.background = s.bg; chip.style.color = s.color;
+      chip.innerHTML = `${esc(t)}<button class="tag-chip-x" type="button">×</button>`;
+      chip.querySelector('.tag-chip-x').onclick = () => { formTags.splice(i, 1); renderFormTags(); };
+      $tagWrap.insertBefore(chip, $tagField);
+    });
+  }
+  function addFormTag(raw) {
+    raw.split(/[,，]+/).map(s => s.trim()).filter(s => s && !formTags.includes(s)).forEach(s => formTags.push(s));
+    renderFormTags(); $tagField.value = '';
+  }
+  $tagField.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',' || e.key === '，') { e.preventDefault(); addFormTag($tagField.value); }
+    else if (e.key === 'Backspace' && !$tagField.value && formTags.length) { formTags.pop(); renderFormTags(); }
+  });
+  $tagField.addEventListener('blur', () => { if ($tagField.value.trim()) addFormTag($tagField.value); });
+
+  /* ── avatar ── */
+  function avatarEl(app) {
+    const wrap = document.createElement('div'); wrap.className = 'app-avatar';
+    if (app.icon) {
+      const img = document.createElement('img'); img.src = app.icon; img.alt = app.name;
+      img.onerror = () => { wrap.innerHTML = ''; setFallback(wrap, app); };
+      wrap.appendChild(img);
+    } else { setFallback(wrap, app); }
+    return wrap;
+  }
+  function setFallback(wrap, app) {
+    const s = (app.tags||[])[0] ? tagStyle(app.tags[0]) : {bg:'var(--accent-bg)',color:'var(--accent-text)'};
+    wrap.style.background = s.bg; wrap.style.color = s.color;
+    wrap.textContent = (app.name||'?')[0].toUpperCase();
+  }
+
+  /* ── render table ── */
+  function filtered() {
+    if (!keyword) return ALL_APPS;
+    const kw = keyword.toLowerCase();
+    return ALL_APPS.filter(a => a.name.toLowerCase().includes(kw) || (a.description||'').toLowerCase().includes(kw));
+  }
+
+  function renderTable() {
+    const list = filtered();
+    $count.textContent = `共 ${list.length} 个应用`;
+    if (!list.length) {
+      $tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="16" cy="16" r="11"/><line x1="24" y1="24" x2="34" y2="34"/></svg><p>${ALL_APPS.length ? '没有找到匹配的应用' : '还没有应用，点击「新增应用」开始添加'}</p></div></td></tr>`;
+      return;
+    }
+    $tbody.innerHTML = '';
+    list.forEach(app => {
+      const tr = document.createElement('tr');
+
+      /* app cell */
+      const tdApp = document.createElement('td');
+      const cell = document.createElement('div'); cell.className = 'app-cell';
+      cell.appendChild(avatarEl(app));
+      const info = document.createElement('div');
+      info.innerHTML = `<div class="app-name">${esc(app.name)}</div><div class="app-id">${esc(app.id)}</div>`;
+      cell.appendChild(info); tdApp.appendChild(cell);
+
+      /* tags cell */
+      const tdTags = document.createElement('td');
+      const tagsDiv = document.createElement('div'); tagsDiv.className = 'tags-cell';
+      (app.tags||[]).forEach(t => {
+        const s = tagStyle(t);
+        const span = document.createElement('span'); span.className = 'tag';
+        span.textContent = t; span.style.background = s.bg; span.style.color = s.color;
+        tagsDiv.appendChild(span);
+      });
+      if (!(app.tags||[]).length) { tagsDiv.innerHTML = `<span style="color:var(--text3);font-size:12px">—</span>`; }
+      tdTags.appendChild(tagsDiv);
+
+      /* os/arch cell */
+      const tdOS = document.createElement('td');
+      tdOS.innerHTML = `<div style="font-size:12px;color:var(--text2)">${esc(app.os||'—')}</div><div style="font-size:11px;color:var(--text3)">${esc(app.arch||'')}</div>`;
+
+      /* version, size */
+      const tdVer  = document.createElement('td'); tdVer.innerHTML  = `<span class="version-text">${esc(app.version||'—')}</span>`;
+      const tdSize = document.createElement('td'); tdSize.innerHTML = `<span class="size-text">${esc(app.size||'—')}</span>`;
+
+      /* actions */
+      const tdAct = document.createElement('td');
+      const acts = document.createElement('div'); acts.className = 'actions';
+      const editBtn = document.createElement('button'); editBtn.className = 'icon-btn'; editBtn.title = '编辑';
+      editBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M9.5 1.5l2 2L4 11H2V9L9.5 1.5z"/></svg>`;
+      editBtn.onclick = () => openModal(app);
+
+      const delBtn = document.createElement('button'); delBtn.className = 'icon-btn danger'; delBtn.title = '删除';
+      delBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M2 3.5h9M5 3.5V2h3v1.5M4 3.5l.5 7h4l.5-7"/></svg>`;
+      delBtn.onclick = () => confirmDelete(app);
+
+      acts.appendChild(editBtn); acts.appendChild(delBtn); tdAct.appendChild(acts);
+
+      tr.append(tdApp, tdTags, tdOS, tdVer, tdSize, tdAct);
+      $tbody.appendChild(tr);
+    });
+  }
+
+  /* ── modal ── */
+  window.openModal = function(app) {
+    editingId = app ? app.id : null;
+    $modalTitle.textContent = app ? '编辑应用' : '新增应用';
+    $saveBtn.textContent = app ? '保存修改' : '添加';
+    ['name','description','version','size','publisher','icon','download_url'].forEach(f => {
+      document.getElementById('f-'+f).value = app ? (app[f]||'') : '';
+    });
+    document.getElementById('f-os').value   = app ? (app.os||'')   : '';
+    document.getElementById('f-arch').value = app ? (app.arch||'') : '';
+    formTags = app ? [...(app.tags||[])] : [];
+    $tagField.value = '';
+    renderFormTags();
+    $modal.classList.add('open');
+    document.getElementById('f-name').focus();
+  };
+
+  window.closeModal = function() { $modal.classList.remove('open'); editingId = null; };
+
+  window.saveApp = async function() {
+    if ($tagField.value.trim()) addFormTag($tagField.value);
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { showToast('请填写应用名称', 'error'); return; }
+    const body = { name, tags: formTags };
+    ['description','version','size','publisher','icon','download_url'].forEach(f => { body[f] = document.getElementById('f-'+f).value.trim(); });
+    body.os   = document.getElementById('f-os').value;
+    body.arch = document.getElementById('f-arch').value;
+    $saveBtn.disabled = true;
+    try {
+      const res = await fetch(editingId ? `/api/apps/${editingId}` : '/api/apps', {
+        method: editingId ? 'PUT' : 'POST',
+        headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail||res.status); }
+      closeModal(); await reload(); showToast(editingId ? '已保存修改' : '应用已添加', 'success');
+    } catch(e) { showToast('保存失败：'+e.message, 'error'); }
+    finally { $saveBtn.disabled = false; }
+  };
+
+  /* ── confirm delete ── */
+  function confirmDelete(app) {
+    $confirmBody.textContent = `确定要删除「${app.name}」吗？此操作无法撤销。`;
+    confirmCb = async () => {
+      try {
+        const res = await fetch(`/api/apps/${app.id}`, { method: 'DELETE' });
+        if (!res.ok && res.status !== 204) throw new Error(res.status);
+        closeConfirm(); await reload(); showToast('已删除', 'success');
+      } catch(e) { showToast('删除失败：'+e.message, 'error'); }
+    };
+    $confirm.classList.add('open');
+    $confirmOk.focus();
+  }
+  window.closeConfirm = function() { $confirm.classList.remove('open'); confirmCb = null; };
+  $confirmOk.addEventListener('click', () => { if (confirmCb) confirmCb(); });
+
+  /* ── events ── */
+  $modal.addEventListener('click',   e => { if (e.target===$modal)   closeModal(); });
+  $confirm.addEventListener('click', e => { if (e.target===$confirm) closeConfirm(); });
+  document.addEventListener('keydown', e => { if (e.key==='Escape') { closeModal(); closeConfirm(); } });
+  $search.addEventListener('input', () => { keyword = $search.value.trim().toLowerCase(); renderTable(); });
+
+  /* ── data ── */
+  async function reload() {
+    try { const r = await fetch('/api/apps'); ALL_APPS = await r.json(); }
+    catch { ALL_APPS = []; }
+    renderTable();
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  reload();
+})();
+</script>
+</body>
+</html>

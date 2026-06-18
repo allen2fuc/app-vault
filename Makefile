@@ -1,4 +1,4 @@
-REPOSITORY = uhub.service.ucloud.cn/allen2fuc/app-shelf:latest
+REPOSITORY = uhub.service.ucloud.cn/allen2fuc/app-vault:latest
 
 dev:
 	uv run uvicorn src.main:app --reload --port 8000

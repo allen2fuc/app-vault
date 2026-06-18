@@ -7,4 +7,4 @@ build:
 	docker build -t ${REPOSITORY} .
 
 push:
-	docker push
+	docker push ${REPOSITORY}

@@ -8,7 +8,6 @@ COPY static/ .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ .
-COPY apps.json .
 
 EXPOSE 8000
 
